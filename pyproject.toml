@@ -1,0 +1,50 @@
+[tool.poetry]
+name = "semantic-scholar-agent"
+version = "0.1.0"
+description = "A tool for searching and analyzing academic papers using Semantic Scholar"
+authors = ["DDDDaren <dddexp2020@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "semantic_scholar_agent"}]
+repository = "https://github.com/DDDDaren/semantic-scholar-agent"
+keywords = ["semantic-scholar", "academic", "research", "papers"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+googlesearch-python = "^1.2.5"
+requests = "^2.25.1"
+semanticscholar = "^0.9.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+black = "^23.0.0"
+flake8 = "^6.0.0"
+mypy = "^1.0.0"
+pytest-cov = "^6.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+semantic-search = "search_cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra -q"
+
+[tool.coverage.run]
+source = ["semantic_scholar_agent"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+    "raise ImportError",
+]
