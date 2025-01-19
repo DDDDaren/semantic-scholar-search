@@ -19,6 +19,7 @@ class Downloader:
         sort,
         min_citation_count,
         output_dir="papers",
+        logger=None,
     ):
         self.db = db
         self.search_query = search_query
@@ -34,7 +35,12 @@ class Downloader:
         self.session_id = session_id
         self.min_citation_count = min_citation_count
         self.output_dir = output_dir
-        self.logger = logging.getLogger(__name__)
+        # Use the passed logger or create a new one with session context
+        if logger:
+            self.logger = logger
+        else:
+            base_logger = logging.getLogger(__name__)
+            self.logger = logging.LoggerAdapter(base_logger, {'session_id': session_id})
 
     def get_directory(self):
         safe_query = "".join(

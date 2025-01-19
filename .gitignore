@@ -11,6 +11,9 @@ dist/
 __pycache__/
 *.py[cod]
 
+# Coverage
+.coverage
+
 papers/
 logs/
 

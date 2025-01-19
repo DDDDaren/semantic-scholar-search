@@ -72,10 +72,9 @@ def main():
                           args.max_results_per_page, args.sort, args.min_citation_count)
     downloader.create_directory()
     
-    logger.info("=== Starting Paper Downloads ===")
+    logger.info("=" * 40 + "Starting Paper Downloads" + "=" * 40)
     for i, paper in enumerate(results, 1):
-        logger.info(f"\nPaper {i}/{len(results)}")
-        logger.info("---")
+        logger.info("-" * 40 + f"Downloading Paper {i}/{len(results)}" + "-" * 40)
         logger.info(f"Title: {paper.title}")
         if paper.authors:
             authors = [author.name for author in paper.authors]
@@ -84,8 +83,9 @@ def main():
         logger.info(f"URL: {paper.url or 'N/A'}")
         
         downloader.download_paper(paper, search_id)
+        logger.info("-" * 40 + f"Downloaded Paper {i}/{len(results)}" + "-" * 40)
         
-    logger.info("\n=== Search Session Completed ===")
+    logger.info("=" * 40 + "Search Session Completed" + "=" * 40)
 
 if __name__ == "__main__":
     main()
