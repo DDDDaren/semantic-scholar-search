@@ -123,17 +123,37 @@ class Downloader:
                     else paper.openAccessPdf.get("url")
                 )
                 self.logger.info(f"Downloading from: {pdf_url}")
-                response = requests.get(pdf_url)
+                
+                # Add headers to mimic a browser request
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Accept': 'application/pdf,application/x-pdf',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Connection': 'keep-alive',
+                }
+                
+                response = requests.get(pdf_url, headers=headers, allow_redirects=True)
                 response.raise_for_status()
 
-                with open(base_filename, "wb") as f:
-                    f.write(response.content)
-                download_success = True
+                # Check if the response is actually a PDF
+                if 'application/pdf' in response.headers.get('Content-Type', ''):
+                    with open(base_filename, "wb") as f:
+                        f.write(response.content)
+                    download_success = True
+                else:
+                    self.logger.warning(f"Response was not a PDF for: {paper.title}")
+                    base_filename = None
 
             else:
                 self.logger.info(f"No downloadable PDF available for: {paper.title}")
                 base_filename = None
 
+        except requests.exceptions.HTTPError as e:
+            self.logger.error(f"HTTP Error downloading paper: {str(e)}")
+            if "403" in str(e):
+                self.logger.error("Access denied. This might require authentication or institutional access.")
+            base_filename = None
+            download_success = False
         except Exception as e:
             self.logger.error(f"Error downloading paper: {str(e)}")
             base_filename = None
