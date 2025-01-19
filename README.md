@@ -80,6 +80,23 @@ All searches and paper information are stored in `search_history.db` with the fo
 - `searches`: Records search queries and parameters
 - `papers`: Stores paper metadata and download status
 
+## Known Issues
+
+### Paper Download Limitations
+
+While the tool can search and find papers from various sources, there are some limitations on downloading PDFs:
+
+1. **IEEE Xplore Papers**
+   - IEEE Xplore blocks automated downloads even for open access papers
+   - Papers require IEEE membership or institutional access
+   - The website employs anti-scraping measures that prevent direct PDF downloads
+   - **Workaround**: Use your institutional access or IEEE membership to manually download papers from the provided URLs
+
+2. **Other Publisher Restrictions**
+   - Similar to IEEE, many academic publishers restrict automated downloads
+   - Papers behind paywalls cannot be downloaded automatically
+   - Some publishers require authentication or institutional access
+
 ## Development
 
 ### Setting up the development environment
