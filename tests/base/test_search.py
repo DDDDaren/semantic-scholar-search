@@ -38,7 +38,9 @@ def test_search_papers_basic():
             bulk=False,
             limit=10,
             sort="citationCount:desc",
-            min_citation_count=0
+            min_citation_count=0,
+            fields_of_study=None,
+            publication_date_or_year=None
         )
 
 def test_search_papers_pagination():
@@ -81,14 +83,18 @@ def test_search_papers_with_parameters():
         mock_results.items = [{"title": "Test Paper"}]
         mock_instance.search_paper.return_value = mock_results
 
+        fields = ["Computer Science", "Medicine"]
+        
         # Test with custom parameters
         results = search_papers(
             "machine learning",
             bulk=True,
             max_pages=2,
             max_results_per_page=20,
-            sort="year:desc",
-            min_citation_count=10
+            sort="publicationDate:desc",
+            min_citation_count=10,
+            fields_of_study=fields,
+            publication_date_or_year="2020:2023"
         )
         
         # Verify custom parameters were passed correctly
@@ -96,6 +102,8 @@ def test_search_papers_with_parameters():
             "machine learning",
             bulk=True,
             limit=20,
-            sort="year:desc",
-            min_citation_count=10
-        ) 
+            sort="publicationDate:desc",
+            min_citation_count=10,
+            fields_of_study=fields,
+            publication_date_or_year="2020:2023"
+        )

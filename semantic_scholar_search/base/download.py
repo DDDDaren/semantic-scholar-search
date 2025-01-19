@@ -18,6 +18,8 @@ class Downloader:
         max_results_per_page,
         sort,
         min_citation_count,
+        fields_of_study=None,
+        publication_date_or_year=None,
         output_dir="papers",
         logger=None,
     ):
@@ -35,6 +37,9 @@ class Downloader:
         self.session_id = session_id
         self.min_citation_count = min_citation_count
         self.output_dir = output_dir
+        self.fields_of_study = fields_of_study
+        self.publication_date_or_year = publication_date_or_year
+
         # Use the passed logger or create a new one with session context
         if logger:
             self.logger = logger
@@ -49,10 +54,20 @@ class Downloader:
         safe_query = safe_query.replace(" ", "_")
         sort_by = "_".join(self.sort.split(":"))
 
+        # Add fields of study to directory path if specified
+        fos_path = ""
+        if self.fields_of_study:
+            fos_path = f"_fos_{'_'.join(self.fields_of_study)}"
+
+        # Add publication date to directory path if specified
+        date_path = ""
+        if self.publication_date_or_year:
+            date_path = f"_date_{self.publication_date_or_year.replace(':', '_to_')}"
+
         return os.path.join(
             self.output_dir,
             safe_query,
-            f"top_{str(self.max_pages)}_pages_{str(self.max_results_per_page)}_per_page_sort_by_{sort_by}_min_citation_count_{str(self.min_citation_count)}",
+            f"top_{str(self.max_pages)}_pages_{str(self.max_results_per_page)}_per_page_sort_by_{sort_by}_min_citation_count_{str(self.min_citation_count)}{fos_path}{date_path}",
             self.session_id,
         )
 

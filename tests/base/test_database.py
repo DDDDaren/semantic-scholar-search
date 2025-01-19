@@ -64,7 +64,7 @@ class TestSearchDatabase(unittest.TestCase):
             query="test query",
             max_pages=1,
             max_results_per_page=10,
-            sort="relevance",
+            sort="relevance:desc",
             min_citation_count=0
         )
         
@@ -115,6 +115,31 @@ class TestSearchDatabase(unittest.TestCase):
         self.assertEqual(result[8], "/path/to/paper.pdf")
         self.assertEqual(result[9], True)
         self.assertIsNotNone(result[10])
+
+    def test_record_search_with_date_range(self):
+        """Test recording a search with publication date range"""
+        search_id = self.db.record_search(
+            session_id="test_session",
+            query="machine learning",
+            max_pages=2,
+            max_results_per_page=10,
+            sort="relevance",
+            min_citation_count=5,
+            fields_of_study=["Computer Science"],
+            publication_date_or_year="2020:2023"
+        )
+        
+        conn = sqlite3.connect(self.test_db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM searches WHERE id=?", (search_id,))
+        result = cursor.fetchone()
+        conn.close()
+        
+        self.assertIsNotNone(result)
+        self.assertEqual(result[1], "test_session")
+        self.assertEqual(result[2], "machine learning")
+        self.assertEqual(result[7], "Computer Science")
+        self.assertEqual(result[8], "2020:2023")
 
 if __name__ == '__main__':
     unittest.main() 

@@ -10,6 +10,8 @@ def search_papers(
     max_results_per_page=10,
     sort="citationCount:desc",
     min_citation_count=0,
+    fields_of_study=None,
+    publication_date_or_year=None,
 ) -> list[Paper]:
     sch = SemanticScholar()  # type: ignore
 
@@ -19,6 +21,8 @@ def search_papers(
         limit=max_results_per_page,
         sort=sort,
         min_citation_count=min_citation_count,
+        fields_of_study=fields_of_study,
+        publication_date_or_year=publication_date_or_year,
     )
 
     for _ in range(max_pages - 1):

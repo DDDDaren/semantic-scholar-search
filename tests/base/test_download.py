@@ -16,7 +16,7 @@ def downloader(mock_db):
         bulk=False,
         max_pages=5,
         max_results_per_page=10,
-        sort="relevance",
+        sort="relevance:desc",
         min_citation_count=0,
         output_dir="test_papers"
     )

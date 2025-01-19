@@ -66,13 +66,30 @@ def main():
         "--sort",
         type=str,
         default="citationCount:desc",
-        help="Sort results by citation count (default: desc). The sort parameter is used only when bulk is True.",
+        help="Sort results by criteria (default: citationCount:desc). The sort parameter is used only when bulk is True.",
+        choices=[
+            "citationCount:desc",
+            "relevance:desc",
+            "publicationDate:desc",
+            "publicationDate:asc",
+        ],
     )
     parser.add_argument(
         "--min-citation-count",
         type=int,
         default=0,
         help="Minimum citation count (default: 0)",
+    )
+    parser.add_argument(
+        "--fields-of-study",
+        type=str,
+        nargs="+",
+        help="Restrict results to specific fields of study (e.g., 'Computer Science' 'Medicine')",
+    )
+    parser.add_argument(
+        "--publication-date-or-year",
+        type=str,
+        help="Restrict results to papers published within a date range (format: YYYY-MM-DD:YYYY-MM-DD, YYYY-MM:YYYY-MM, or YYYY:YYYY)",
     )
 
     args = parser.parse_args()
@@ -90,7 +107,9 @@ def main():
     logger.info(
         f"Parameters: bulk={args.bulk}, max_pages={args.max_pages}, "
         f"max_results_per_page={args.max_results_per_page}, sort={args.sort}, "
-        f"min_citation_count={args.min_citation_count}"
+        f"min_citation_count={args.min_citation_count}, "
+        f"fields_of_study={args.fields_of_study}, "
+        f"publication_date_or_year={args.publication_date_or_year}"
     )
 
     if args.bulk:
@@ -107,6 +126,8 @@ def main():
         args.max_results_per_page,
         args.sort,
         args.min_citation_count,
+        args.fields_of_study,
+        args.publication_date_or_year,
     )
 
     logger.info("=" * 40 + " Starting Paper Search " + "=" * 40)
@@ -117,6 +138,8 @@ def main():
         max_results_per_page=args.max_results_per_page,
         sort=args.sort,
         min_citation_count=args.min_citation_count,
+        fields_of_study=args.fields_of_study,
+        publication_date_or_year=args.publication_date_or_year,
     )
 
     if not results:
@@ -135,6 +158,8 @@ def main():
         args.max_results_per_page,
         args.sort,
         args.min_citation_count,
+        args.fields_of_study,
+        args.publication_date_or_year,
     )
     downloader.create_directory()
 

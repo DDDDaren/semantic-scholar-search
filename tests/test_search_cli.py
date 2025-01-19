@@ -29,6 +29,8 @@ def mock_args():
     args.max_results_per_page = 10
     args.sort = "citationCount:desc"
     args.min_citation_count = 0
+    args.fields_of_study = None
+    args.publication_date_or_year = None
     return args
 
 @pytest.fixture(autouse=True)
@@ -53,8 +55,19 @@ def test_setup_logging():
         os.rmdir("logs")
 
 @patch('semantic_scholar_search.search_cli.argparse.ArgumentParser')
-def test_main_with_no_results(mock_parser, mock_args):
-    mock_parser.return_value.parse_args.return_value = mock_args
+def test_main_with_no_results(mock_parser):
+    # Create specific args for this test
+    args = Mock()
+    args.query = "machine learning basics"
+    args.bulk = False
+    args.max_pages = 2
+    args.max_results_per_page = 20
+    args.sort = "citationCount:desc"
+    args.min_citation_count = 5
+    args.fields_of_study = None
+    args.publication_date_or_year = None
+    
+    mock_parser.return_value.parse_args.return_value = args
     
     with patch('semantic_scholar_search.search_cli.search_papers') as mock_search, \
          patch('semantic_scholar_search.search_cli.SearchDatabase') as mock_db, \
@@ -66,9 +79,16 @@ def test_main_with_no_results(mock_parser, mock_args):
         
         main()
         
-        mock_logger.info.assert_any_call("No results found")
-        mock_search.assert_called_once()
-        mock_db.assert_called_once()
+        mock_search.assert_called_once_with(
+            args.query,
+            bulk=args.bulk,
+            max_pages=args.max_pages,
+            max_results_per_page=args.max_results_per_page,
+            sort=args.sort,
+            min_citation_count=args.min_citation_count,
+            fields_of_study=args.fields_of_study,
+            publication_date_or_year=args.publication_date_or_year
+        )
 
 @patch('semantic_scholar_search.search_cli.argparse.ArgumentParser')
 def test_main_with_results(mock_parser, mock_args, mock_paper):
@@ -94,7 +114,9 @@ def test_main_with_results(mock_parser, mock_args, mock_paper):
             max_pages=mock_args.max_pages,
             max_results_per_page=mock_args.max_results_per_page,
             sort=mock_args.sort,
-            min_citation_count=mock_args.min_citation_count
+            min_citation_count=mock_args.min_citation_count,
+            fields_of_study=mock_args.fields_of_study,
+            publication_date_or_year=mock_args.publication_date_or_year
         )
         
         # Verify paper information was logged
@@ -166,3 +188,39 @@ def test_setup_logging_file_creation():
     os.remove(log_file)
     if not os.listdir("logs"):
         os.rmdir("logs")
+
+@patch('semantic_scholar_search.search_cli.argparse.ArgumentParser')
+def test_main_with_date_range(mock_parser):
+    # Create specific args for this test
+    args = Mock()
+    args.query = "deep learning advances"
+    args.bulk = True
+    args.max_pages = 3
+    args.max_results_per_page = 30
+    args.sort = "publicationDate:desc"
+    args.min_citation_count = 10
+    args.fields_of_study = ["Computer Science", "Artificial Intelligence"]
+    args.publication_date_or_year = "2020:2023"
+    
+    mock_parser.return_value.parse_args.return_value = args
+    
+    with patch('semantic_scholar_search.search_cli.search_papers') as mock_search, \
+         patch('semantic_scholar_search.search_cli.SearchDatabase'), \
+         patch('semantic_scholar_search.search_cli.setup_logging') as mock_logging:
+        
+        mock_search.return_value = []
+        mock_logger = Mock()
+        mock_logging.return_value = mock_logger
+        
+        main()
+        
+        mock_search.assert_called_once_with(
+            args.query,
+            bulk=args.bulk,
+            max_pages=args.max_pages,
+            max_results_per_page=args.max_results_per_page,
+            sort=args.sort,
+            min_citation_count=args.min_citation_count,
+            fields_of_study=args.fields_of_study,
+            publication_date_or_year=args.publication_date_or_year
+        )

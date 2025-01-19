@@ -30,7 +30,9 @@ class SearchDatabase:
                 max_pages INTEGER NOT NULL,
                 max_results_per_page INTEGER NOT NULL,
                 sort TEXT NOT NULL,
-                min_citation_count INTEGER NOT NULL
+                min_citation_count INTEGER NOT NULL,
+                fields_of_study TEXT,
+                publication_date_or_year TEXT
             )
         """
         )
@@ -66,6 +68,8 @@ class SearchDatabase:
         max_results_per_page,
         sort,
         min_citation_count,
+        fields_of_study=None,
+        publication_date_or_year=None,
     ):
         """Record a new search"""
         conn = sqlite3.connect(self.db_path)
@@ -73,8 +77,11 @@ class SearchDatabase:
 
         c.execute(
             """
-            INSERT INTO searches (session_id, query, max_pages, max_results_per_page, sort, min_citation_count)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO searches (
+                session_id, query, max_pages, max_results_per_page, 
+                sort, min_citation_count, fields_of_study, publication_date_or_year
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
             (
                 session_id,
@@ -83,6 +90,8 @@ class SearchDatabase:
                 max_results_per_page,
                 sort,
                 min_citation_count,
+                ",".join(fields_of_study) if fields_of_study else None,
+                publication_date_or_year,
             ),
         )
 
