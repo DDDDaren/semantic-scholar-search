@@ -11,17 +11,19 @@ def setup_logging(session_id):
     # Create logs directory if it doesn't exist
     os.makedirs('logs', exist_ok=True)
     
-    # Configure logging
+    # Configure logging with a more structured format
     log_file = f'logs/search_{session_id}.log'
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
+        format='%(asctime)s [%(levelname)s] [%(name)s] [session=%(session_id)s] %(message)s',
         handlers=[
             logging.FileHandler(log_file),
-            logging.StreamHandler()  # This will still show output in console
+            logging.StreamHandler()
         ]
     )
-    return logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)
+    # Add session_id to logger adapter for consistent correlation
+    return logging.LoggerAdapter(logger, {'session_id': session_id})
 
 def main():
     parser = argparse.ArgumentParser(description='Search papers on Semantic Scholar')
@@ -40,39 +42,50 @@ def main():
     session_id = datetime.now().strftime('%Y%m%d_%H%M%S')
     logger = setup_logging(session_id)
 
+    logger.info("=== Search Session Started ===")
+    logger.info(f"Query: {args.query}")
+    logger.info(f"Parameters: bulk={args.bulk}, max_pages={args.max_pages}, "
+               f"max_results_per_page={args.max_results_per_page}, sort={args.sort}, "
+               f"min_citation_count={args.min_citation_count}")
+
     if args.bulk:
-        logger.warning("When bulk is True, the `limit` will be overridden to 1000 within the search_papers function and the provided max-results-per-page argument will be ignored.")
+        logger.warning("Bulk mode enabled: limit will be overridden to 1000")
     else:
         if args.sort != "relevance:desc":
-            logger.warning("When bulk is False, the sort will be overridden to relevance:desc within the search_papers function and the provided sort argument will be ignored.")
+            logger.warning("Non-bulk mode: sort will be overridden to relevance:desc")
     
     db = SearchDatabase()
     search_id = db.record_search(args.query, args.max_pages, args.max_results_per_page, session_id, args.sort, args.min_citation_count)
     
-    results = search_papers(
-        args.query, bulk=args.bulk, max_pages=args.max_pages, max_results_per_page=args.max_results_per_page, sort=args.sort, min_citation_count=args.min_citation_count
-    )
+    logger.info("=== Starting Paper Search ===")
+    results = search_papers(args.query, bulk=args.bulk, max_pages=args.max_pages, 
+                          max_results_per_page=args.max_results_per_page, 
+                          sort=args.sort, min_citation_count=args.min_citation_count)
     
     if not results:
         logger.info("No results found")
         return
 
-    downloader = Downloader(db, session_id, args.query, args.bulk, args.max_pages, args.max_results_per_page, args.sort, args.min_citation_count)
+    logger.info(f"Found {len(results)} papers")
+    
+    downloader = Downloader(db, session_id, args.query, args.bulk, args.max_pages, 
+                          args.max_results_per_page, args.sort, args.min_citation_count)
     downloader.create_directory()
     
-    for paper in results:
-        paper_info = []
-        paper_info.append(f"Title: {paper.title}")
+    logger.info("=== Starting Paper Downloads ===")
+    for i, paper in enumerate(results, 1):
+        logger.info(f"\nPaper {i}/{len(results)}")
+        logger.info("---")
+        logger.info(f"Title: {paper.title}")
         if paper.authors:
             authors = [author.name for author in paper.authors]
-            paper_info.append(f"Authors: {', '.join(authors)}")
-        paper_info.append(f"Year: {paper.year or 'N/A'}")
-        paper_info.append(f"Paper URL: {paper.url or 'N/A'}")
-        
-        logger.info("\n".join(paper_info))
+            logger.info(f"Authors: {', '.join(authors)}")
+        logger.info(f"Year: {paper.year or 'N/A'}")
+        logger.info(f"URL: {paper.url or 'N/A'}")
         
         downloader.download_paper(paper, search_id)
-        logger.info("-" * 80)
+        
+    logger.info("\n=== Search Session Completed ===")
 
 if __name__ == "__main__":
     main()
