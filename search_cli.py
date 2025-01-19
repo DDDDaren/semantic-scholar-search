@@ -1,6 +1,5 @@
 import argparse
 from datetime import datetime
-import warnings
 import logging
 import os
 
@@ -50,7 +49,9 @@ def main():
     db = SearchDatabase()
     search_id = db.record_search(args.query, args.max_pages, args.max_results_per_page, session_id, args.sort, args.min_citation_count)
     
-    results = search_papers(args.query, bulk=args.bulk, max_pages=args.max_pages, max_results_per_page=args.max_results_per_page, sort=args.sort, min_citation_count=args.min_citation_count)
+    results = search_papers(
+        args.query, bulk=args.bulk, max_pages=args.max_pages, max_results_per_page=args.max_results_per_page, sort=args.sort, min_citation_count=args.min_citation_count
+    )
     
     if not results:
         logger.info("No results found")

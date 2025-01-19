@@ -6,6 +6,7 @@ import os
 import requests
 import logging
 
+
 class Downloader:
     def __init__(
         self,
@@ -17,7 +18,7 @@ class Downloader:
         max_results_per_page,
         sort,
         min_citation_count,
-        output_dir="papers"
+        output_dir="papers",
     ):
         self.db = db
         self.search_query = search_query
@@ -34,30 +35,32 @@ class Downloader:
         self.min_citation_count = min_citation_count
         self.output_dir = output_dir
         self.logger = logging.getLogger(__name__)
-    
+
     def get_directory(self):
-        safe_query = "".join(c for c in self.search_query if c.isalnum() or c in (' ', '-', '_')).rstrip()
-        safe_query = safe_query.replace(' ', '_')
-        sort_by = '_'.join(self.sort.split(':'))
+        safe_query = "".join(
+            c for c in self.search_query if c.isalnum() or c in (" ", "-", "_")
+        ).rstrip()
+        safe_query = safe_query.replace(" ", "_")
+        sort_by = "_".join(self.sort.split(":"))
 
         return os.path.join(
             self.output_dir,
             safe_query,
             f"top_{str(self.max_pages)}_pages_{str(self.max_results_per_page)}_per_page_sort_by_{sort_by}_min_citation_count_{str(self.min_citation_count)}",
-            self.session_id
+            self.session_id,
         )
-    
+
     def create_directory(self):
         os.makedirs(self.get_directory(), exist_ok=True)
 
     def download_paper(self, paper, search_id):
         """
         Download paper based on its source (ArXiv or openAccessPdf)
-        
+
         Args:
             paper: Paper object from semanticscholar
             search_id: ID of the current search session
-        
+
         Returns:
             str: Path to the downloaded file or None if download failed
         """
@@ -67,45 +70,55 @@ class Downloader:
             )
 
         # Generate base filename from paper title
-        safe_title = "".join(c for c in paper.title if c.isalnum() or c in (' ', '-', '_')).rstrip()
+        safe_title = "".join(
+            c for c in paper.title if c.isalnum() or c in (" ", "-", "_")
+        ).rstrip()
         base_filename = os.path.join(self.get_directory(), safe_title + ".pdf")
-        
+
         download_success = False
         try:
             # Case 1: ArXiv paper
-            if paper.journal and paper.journal.name == 'ArXiv':
-                arxiv_id = paper.journal.volume.replace('abs/', '') if paper.journal.volume else None
+            if paper.journal and paper.journal.name == "ArXiv":
+                arxiv_id = (
+                    paper.journal.volume.replace("abs/", "")
+                    if paper.journal.volume
+                    else None
+                )
                 if arxiv_id:
                     arxiv_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
                     self.logger.info(f"Downloading from ArXiv: {arxiv_url}")
                     response = requests.get(arxiv_url)
                     response.raise_for_status()
-                    
-                    with open(base_filename, 'wb') as f:
+
+                    with open(base_filename, "wb") as f:
                         f.write(response.content)
                     download_success = True
-                    
+
             # Case 2: Open Access PDF
             elif paper.isOpenAccess and paper.openAccessPdf is not None:
-                pdf_url = paper.openAccessPdf.url if hasattr(paper.openAccessPdf, 'url') else paper.openAccessPdf.get('url')
+                pdf_url = (
+                    paper.openAccessPdf.url
+                    if hasattr(paper.openAccessPdf, "url")
+                    else paper.openAccessPdf.get("url")
+                )
                 self.logger.info(f"Downloading from: {pdf_url}")
                 response = requests.get(pdf_url)
                 response.raise_for_status()
-                
-                with open(base_filename, 'wb') as f:
+
+                with open(base_filename, "wb") as f:
                     f.write(response.content)
                 download_success = True
-                
+
             else:
                 self.logger.info(f"No downloadable PDF available for: {paper.title}")
                 base_filename = None
-                
+
         except Exception as e:
             self.logger.error(f"Error downloading paper: {str(e)}")
             base_filename = None
             download_success = False
-        
+
         # Record the paper and its download status in the database
         self.db.record_paper(search_id, paper, base_filename, download_success)
-        
+
         return base_filename
