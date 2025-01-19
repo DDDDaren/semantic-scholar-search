@@ -19,3 +19,6 @@ logs/
 
 *.db
 *.sqlite
+
+# Other
+.DS_Store
