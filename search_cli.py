@@ -42,7 +42,7 @@ def main():
     session_id = datetime.now().strftime('%Y%m%d_%H%M%S')
     logger = setup_logging(session_id)
 
-    logger.info("=== Search Session Started ===")
+    logger.info("=" * 40 + "Search Session Started" + "=" * 40)
     logger.info(f"Query: {args.query}")
     logger.info(f"Parameters: bulk={args.bulk}, max_pages={args.max_pages}, "
                f"max_results_per_page={args.max_results_per_page}, sort={args.sort}, "
@@ -57,7 +57,7 @@ def main():
     db = SearchDatabase()
     search_id = db.record_search(session_id, args.query, args.max_pages, args.max_results_per_page, args.sort, args.min_citation_count)
     
-    logger.info("=== Starting Paper Search ===")
+    logger.info("=" * 40 + "Starting Paper Search" + "=" * 40)
     results = search_papers(args.query, bulk=args.bulk, max_pages=args.max_pages, 
                           max_results_per_page=args.max_results_per_page, 
                           sort=args.sort, min_citation_count=args.min_citation_count)
@@ -74,7 +74,7 @@ def main():
     
     logger.info("=" * 40 + "Starting Paper Downloads" + "=" * 40)
     for i, paper in enumerate(results, 1):
-        logger.info("-" * 40 + f"Downloading Paper {i}/{len(results)}" + "-" * 40)
+        logger.info("-" * 40 + f" Downloading Paper {i}/{len(results)} " + "-" * 40)
         logger.info(f"Title: {paper.title}")
         if paper.authors:
             authors = [author.name for author in paper.authors]
@@ -83,7 +83,7 @@ def main():
         logger.info(f"URL: {paper.url or 'N/A'}")
         
         downloader.download_paper(paper, search_id)
-        logger.info("-" * 40 + f"Downloaded Paper {i}/{len(results)}" + "-" * 40)
+        logger.info("-" * 40 + f" Downloaded Paper {i}/{len(results)} " + "-" * 40)
         
     logger.info("=" * 40 + "Search Session Completed" + "=" * 40)
 
