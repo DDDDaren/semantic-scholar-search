@@ -24,7 +24,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'semantic-search=semantic_scholar_search.cli:main',
+            'semantic-scholar-search=semantic_scholar_search.cli:main',
         ],
     },
 ) 

@@ -80,23 +80,23 @@ A Python-based command-line tool for searching and downloading academic papers f
 ### Basic Search
 
 ```bash
-poetry run semantic-search "machine learning"
+semantic-scholar-search "machine learning"
 ```
 
 ### Advanced Search Options
 
 ```bash
 # Search with minimum citation count
-poetry run semantic-search "deep learning" --min-citation-count 100
+semantic-scholar-search "deep learning" --min-citation-count 100
 
 # Bulk download (up to 100,00 papers)
-poetry run semantic-search "neural networks" --bulk
+semantic-scholar-search "neural networks" --bulk
 
 # Customize number of pages and results per page
-poetry run semantic-search "reinforcement learning" --max-pages 5 --max-results-per-page 20
+semantic-scholar-search "reinforcement learning" --max-pages 5 --max-results-per-page 20
 
 # Sort by citation count (descending)
-poetry run semantic-search "transformer models" --sort "citationCount:desc"
+semantic-scholar-search "transformer models" --sort "citationCount:desc"
 ```
 
 ### Output
