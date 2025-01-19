@@ -138,72 +138,33 @@ class Downloader:
 
         return base_filename
 
-    def _handle_arxiv_download(self, arxiv_id, base_filename, paper, max_retries=3):
-        """Handle ArXiv paper downloads with CAPTCHA detection"""
+    def _handle_arxiv_download(self, arxiv_id, base_filename, paper):
+        """Handle ArXiv paper downloads"""
         arxiv_id = arxiv_id.strip()
         if not arxiv_id.endswith('.pdf'):
             arxiv_id = arxiv_id + '.pdf'
         
         arxiv_url = f"https://arxiv.org/pdf/{arxiv_id}"
-        abs_url = f"https://arxiv.org/abs/{arxiv_id.replace('.pdf', '')}"
-        robots_url = "https://arxiv.org/human-verification"
-        
         self.logger.info(f"Downloading from ArXiv: {arxiv_url}")
         
         headers = self._get_browser_headers()
         
-        for attempt in range(max_retries):
-            try:
-                with requests.Session() as session:
-                    # First try to get the PDF directly
-                    pdf_response = session.get(arxiv_url, headers=headers, allow_redirects=True, timeout=10)
-                    
-                    # If we get HTML instead of PDF, we're probably being blocked
-                    if 'text/html' in pdf_response.headers.get('Content-Type', ''):
-                        self.logger.warning("Access blocked. Opening verification page...")
-                        
-                        # First try the direct verification URL
-                        webbrowser.open(robots_url)
-                        time.sleep(1)  # Short wait to see if the page loads
-                        
-                        # If that fails, try the abstract page as fallback
-                        webbrowser.open(abs_url)
-                        
-                        # Prompt user to complete verification
-                        input("Please complete the verification in your browser and press Enter to continue...")
-                        
-                        # Wait a bit before retrying
-                        time.sleep(2)
-                        continue
-                    
-                    # If we get here and response is OK, we should have a PDF
-                    pdf_response.raise_for_status()
-                    
-                    if pdf_response.headers.get('Content-Type', '').startswith('application/pdf'):
-                        with open(base_filename, "wb") as f:
-                            f.write(pdf_response.content)
-                        return True
-                    else:
-                        self.logger.warning(f"Received non-PDF response for: {paper.title}")
-                        
-                        # As a last resort, open the abstract page
-                        self.logger.warning("Opening abstract page for manual download...")
-                        webbrowser.open(abs_url)
-                        input("Please try downloading the PDF manually from the abstract page. Press Enter when done...")
-                        
-                        # Check if the file was downloaded
-                        if os.path.exists(base_filename):
-                            return True
-                        return False
+        try:
+            with requests.Session() as session:
+                response = session.get(arxiv_url, headers=headers, allow_redirects=True, timeout=10)
+                response.raise_for_status()
                 
-            except requests.exceptions.RequestException as e:
-                if attempt == max_retries - 1:
-                    self.logger.error(f"Failed to download from ArXiv after {max_retries} attempts: {str(e)}")
+                if response.headers.get('Content-Type', '').startswith('application/pdf'):
+                    with open(base_filename, "wb") as f:
+                        f.write(response.content)
+                    return True
+                else:
+                    self.logger.warning(f"ArXiv response was not a PDF for: {paper.title}")
                     return False
-                time.sleep(2)  # Wait before retrying
-        
-        self.logger.warning(f"ArXiv download failed for: {paper.title}")
-        return False
+                
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"Failed to download from ArXiv: {str(e)}")
+            return False
 
     def _handle_pdf_download(self, pdf_url, base_filename, paper):
         """Handle general PDF downloads"""
@@ -240,15 +201,7 @@ class Downloader:
                         f.write(content)
                     return True
                 else:
-                    # If automated download fails, try manual download
-                    self.logger.warning(f"Automated download failed for: {paper.title}")
-                    self.logger.info("Opening paper URL for manual download...")
-                    webbrowser.open(paper.url)  # Open the Semantic Scholar page
-                    input("Please try downloading the PDF manually. Once downloaded, press Enter to continue...")
-                    
-                    # Check if file exists in downloads directory
-                    if os.path.exists(base_filename):
-                        return True
+                    self.logger.warning(f"Response was not a valid PDF for: {paper.title}")
                     return False
 
             except requests.exceptions.Timeout:
@@ -261,7 +214,6 @@ class Downloader:
                     self.logger.error(f"Service temporarily unavailable: {pdf_url}")
                 elif e.response.status_code == 403:
                     self.logger.error(f"Access denied. This might require authentication")
-                self.logger.error(f"Please try accessing the paper manually via: {paper.url}")
                 return False
             except Exception as e:
                 self.logger.error(f"Error downloading paper: {str(e)}")
@@ -292,10 +244,9 @@ class Downloader:
                         break
                 
                 if not reader_link:
-                    # Try to find it in script tags (might be in JavaScript data)
+                    # Try to find it in script tags
                     for script in soup.find_all('script'):
                         if script.string and 'semanticScholar' in script.string:
-                            # Look for reader URL pattern
                             match = re.search(r'https://[^"\']*reader[^"\']*', script.string)
                             if match:
                                 reader_link = match.group(0)
