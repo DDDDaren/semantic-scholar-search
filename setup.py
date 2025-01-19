@@ -4,13 +4,13 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="semantic-scholar-agent",
+    name="semantic-scholar-search",
     version="0.1.0",
     author="DDDDaren",
     description="A tool for searching and downloading academic papers from Semantic Scholar",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/DDDDaren/semantic-scholar-agent",
+    url="https://github.com/DDDDaren/semantic-scholar-search",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3.10",

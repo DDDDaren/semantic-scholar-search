@@ -16,13 +16,13 @@ A Python-based command-line tool for searching and downloading academic papers f
 ### For Users
 1. Install directly from GitHub:
    ```bash
-   pip install git+https://github.com/DDDDaren/semantic-scholar-search.git
+   pip install git+https://github.com/DDDDaren/semantic-scholar-searchh.git
    ```
 
    Or install from source:
    ```bash
-   git clone https://github.com/DDDDaren/semantic-scholar-search.git
-   cd semantic-scholar-search
+   git clone https://github.com/DDDDaren/semantic-scholar-searchh.git
+   cd semantic-scholar-searchh
    pip install .
    ```
 
@@ -52,8 +52,8 @@ A Python-based command-line tool for searching and downloading academic papers f
 
 3. Clone and enter the repository:
    ```bash
-   git clone https://github.com/DDDDaren/semantic-scholar-search.git
-   cd semantic-scholar-search
+   git clone https://github.com/DDDDaren/semantic-scholar-searchh.git
+   cd semantic-scholar-searchh
    direnv allow
    ```
 

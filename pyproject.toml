@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "semantic-scholar-agent"
+name = "semantic-scholar-search"
 version = "0.1.0"
 description = "A tool for searching and analyzing academic papers using Semantic Scholar"
 authors = ["DDDDaren <dddexp2020@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 packages = [{include = "semantic_scholar_agent"}]
-repository = "https://github.com/DDDDaren/semantic-scholar-agent"
+repository = "https://github.com/DDDDaren/semantic-scholar-search"
 keywords = ["semantic-scholar", "academic", "research", "papers"]
 
 [tool.poetry.dependencies]
