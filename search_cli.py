@@ -4,9 +4,9 @@ import warnings
 import logging
 import os
 
-from semantic_scholar_agent.search import search_papers
-from semantic_scholar_agent.download import Downloader
-from semantic_scholar_agent.database import SearchDatabase
+from semantic_scholar_search.search import search_papers
+from semantic_scholar_search.download import Downloader
+from semantic_scholar_search.database import SearchDatabase
 
 def setup_logging(session_id):
     # Create logs directory if it doesn't exist

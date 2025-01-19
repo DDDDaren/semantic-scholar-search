@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import Mock, patch
-from semantic_scholar_agent.search import search_papers
+from semantic_scholar_search.search import search_papers
 from semanticscholar.SemanticScholarException import NoMorePagesException
 
 @pytest.fixture
@@ -20,7 +20,7 @@ def mock_search_results():
     return mock_results
 
 def test_search_papers_basic():
-    with patch('semantic_scholar_agent.search.SemanticScholar') as mock_sch:
+    with patch('semantic_scholar_search.search.SemanticScholar') as mock_sch:
         # Setup mock
         mock_instance = mock_sch.return_value
         mock_results = Mock()
@@ -42,7 +42,7 @@ def test_search_papers_basic():
         )
 
 def test_search_papers_pagination():
-    with patch('semantic_scholar_agent.search.SemanticScholar') as mock_sch:
+    with patch('semantic_scholar_search.search.SemanticScholar') as mock_sch:
         # Setup mock
         mock_instance = mock_sch.return_value
         mock_results = Mock()
@@ -56,7 +56,7 @@ def test_search_papers_pagination():
         assert mock_results.next_page.call_count == 2
 
 def test_search_papers_no_more_pages():
-    with patch('semantic_scholar_agent.search.SemanticScholar') as mock_sch:
+    with patch('semantic_scholar_search.search.SemanticScholar') as mock_sch:
         # Setup mock
         mock_instance = mock_sch.return_value
         mock_results = Mock()
@@ -74,7 +74,7 @@ def test_search_papers_no_more_pages():
         assert mock_results.next_page.call_count == 1
 
 def test_search_papers_with_parameters():
-    with patch('semantic_scholar_agent.search.SemanticScholar') as mock_sch:
+    with patch('semantic_scholar_search.search.SemanticScholar') as mock_sch:
         # Setup mock
         mock_instance = mock_sch.return_value
         mock_results = Mock()

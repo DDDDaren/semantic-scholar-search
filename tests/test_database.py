@@ -2,7 +2,7 @@ import unittest
 import sqlite3
 import os
 from datetime import datetime
-from semantic_scholar_agent.database import SearchDatabase
+from semantic_scholar_search.database import SearchDatabase
 from unittest.mock import Mock
 
 class TestSearchDatabase(unittest.TestCase):

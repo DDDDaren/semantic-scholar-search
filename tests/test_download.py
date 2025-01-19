@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import Mock, patch, mock_open
 import os
-from semantic_scholar_agent.download import Downloader
+from semantic_scholar_search.download import Downloader
 
 @pytest.fixture
 def mock_db():

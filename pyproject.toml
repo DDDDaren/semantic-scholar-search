@@ -5,7 +5,7 @@ description = "A tool for searching and analyzing academic papers using Semantic
 authors = ["DDDDaren <dddexp2020@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "semantic_scholar_agent"}]
+packages = [{include = "semantic_scholar_search"}]
 repository = "https://github.com/DDDDaren/semantic-scholar-search"
 keywords = ["semantic-scholar", "academic", "research", "papers"]
 
@@ -35,7 +35,7 @@ python_files = ["test_*.py"]
 addopts = "-ra -q"
 
 [tool.coverage.run]
-source = ["semantic_scholar_agent"]
+source = ["semantic_scholar_search"]
 omit = ["tests/*"]
 
 [tool.coverage.report]
