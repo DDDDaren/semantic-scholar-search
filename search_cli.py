@@ -55,7 +55,7 @@ def main():
             logger.warning("Non-bulk mode: sort will be overridden to relevance:desc")
     
     db = SearchDatabase()
-    search_id = db.record_search(args.query, args.max_pages, args.max_results_per_page, session_id, args.sort, args.min_citation_count)
+    search_id = db.record_search(session_id, args.query, args.max_pages, args.max_results_per_page, args.sort, args.min_citation_count)
     
     logger.info("=== Starting Paper Search ===")
     results = search_papers(args.query, bulk=args.bulk, max_pages=args.max_pages, 
