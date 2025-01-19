@@ -67,7 +67,7 @@ def main():
     session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
     logger = setup_logging(session_id)
 
-    logger.info("=" * 40 + "Search Session Started" + "=" * 40)
+    logger.info("=" * 40 + " Search Session Started " + "=" * 40)
     logger.info(f"Query: {args.query}")
     logger.info(
         f"Parameters: bulk={args.bulk}, max_pages={args.max_pages}, "
@@ -91,7 +91,7 @@ def main():
         args.min_citation_count,
     )
 
-    logger.info("=" * 40 + "Starting Paper Search" + "=" * 40)
+    logger.info("=" * 40 + " Starting Paper Search " + "=" * 40)
     results = search_papers(
         args.query,
         bulk=args.bulk,
@@ -106,6 +106,7 @@ def main():
         return
 
     logger.info(f"Found {len(results)} papers")
+    logger.info("=" * 40 + " Finished Paper Search " + "=" * 40)
 
     downloader = Downloader(
         db,
@@ -119,7 +120,7 @@ def main():
     )
     downloader.create_directory()
 
-    logger.info("=" * 40 + "Starting Paper Downloads" + "=" * 40)
+    logger.info("=" * 40 + " Starting Paper Downloads " + "=" * 40)
     for i, paper in enumerate(results, 1):
         logger.info("-" * 40 + f" Downloading Paper {i}/{len(results)} " + "-" * 40)
         logger.info(f"Title: {paper.title}")
@@ -132,7 +133,7 @@ def main():
         downloader.download_paper(paper, search_id)
         logger.info("-" * 40 + f" Downloaded Paper {i}/{len(results)} " + "-" * 40)
 
-    logger.info("=" * 40 + "Search Session Completed" + "=" * 40)
+    logger.info("=" * 40 + " Search Session Completed " + "=" * 40)
 
 
 if __name__ == "__main__":
