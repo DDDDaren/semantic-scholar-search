@@ -14,13 +14,31 @@ def setup_logging(session_id):
 
     # Configure logging with a more structured format
     log_file = f"logs/search_{session_id}.log"
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] [%(name)s] [session=%(session_id)s] %(message)s",
-        handlers=[logging.FileHandler(log_file), logging.StreamHandler()],
-    )
+
+    # Get the root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+
+    # Clear any existing handlers
+    root_logger.handlers.clear()
+
+    # Create and configure handlers
+    file_handler = logging.FileHandler(log_file)
+    stream_handler = logging.StreamHandler()
+
+    # Create formatter
+    formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] %(message)s")
+
+    # Add formatter to handlers
+    file_handler.setFormatter(formatter)
+    stream_handler.setFormatter(formatter)
+
+    # Add handlers to root logger
+    root_logger.addHandler(file_handler)
+    root_logger.addHandler(stream_handler)
+
+    # Create and return logger for this module
     logger = logging.getLogger(__name__)
-    # Add session_id to logger adapter for consistent correlation
     return logging.LoggerAdapter(logger, {"session_id": session_id})
 
 
