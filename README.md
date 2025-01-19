@@ -8,74 +8,26 @@ A Python-based command-line tool for searching and downloading academic papers f
     - Configurable search parameters (pages, results per page, minimum citations, sort by citation count or relevance)
 - Track search history and paper downloads in SQLite database
 
-## Installation
+## Usage
 
 ### Prerequisites
+
 - Python 3.10 or higher
 
-### For Users
-1. Install directly from GitHub:
+### Installation
+
+0. (Optional) Creating a virtual environment:
    ```bash
-   pip install git+https://github.com/DDDDaren/semantic-scholar-search.git
+   python -m venv .venv
+   source .venv/bin/activate
    ```
 
-   Or install from source:
+1. Install from source:
    ```bash
    git clone https://github.com/DDDDaren/semantic-scholar-search.git
    cd semantic-scholar-search
    pip install .
    ```
-
-### For Developers
-
-#### Option 1: Using direnv (recommended)
-1. Install direnv:
-   ```bash
-   # On macOS
-   brew install direnv
-
-   # On Ubuntu/Debian
-   sudo apt-get install direnv
-
-   # On Windows (using Chocolatey)
-   choco install direnv
-   ```
-
-2. Add direnv hook to your shell:
-   ```bash
-   # For zsh (add to ~/.zshrc):
-   eval "$(direnv hook zsh)"
-
-   # For bash (add to ~/.bashrc):
-   eval "$(direnv hook bash)"
-   ```
-
-3. Clone and enter the repository:
-   ```bash
-   git clone https://github.com/DDDDaren/semantic-scholar-search.git
-   cd semantic-scholar-search
-   direnv allow
-   ```
-
-#### Option 2: Manual Setup
-1. Create and activate virtual environment:
-   ```bash
-   python -m venv .venv
-   
-   # On Unix/macOS
-   source .venv/bin/activate
-   
-   # On Windows
-   .venv\Scripts\activate
-   ```
-
-2. Install dependencies:
-   ```bash
-   pip install poetry
-   poetry install
-   ```
-
-## Usage
 
 ### Basic Search
 
@@ -127,6 +79,66 @@ All searches and paper information are stored in `search_history.db` with the fo
 
 - `searches`: Records search queries and parameters
 - `papers`: Stores paper metadata and download status
+
+## Development
+
+### Setting up the development environment
+
+#### Option 1: Using direnv (recommended)
+1. Install direnv:
+   ```bash
+   # On macOS
+   brew install direnv
+
+   # On Ubuntu/Debian
+   sudo apt-get install direnv
+
+   # On Windows (using Chocolatey)
+   choco install direnv
+   ```
+
+2. Add direnv hook to your shell:
+   ```bash
+   # For zsh (add to ~/.zshrc):
+   eval "$(direnv hook zsh)"
+
+   # For bash (add to ~/.bashrc):
+   eval "$(direnv hook bash)"
+   ```
+
+3. Clone and enter the repository:
+   ```bash
+   git clone https://github.com/DDDDaren/semantic-scholar-search.git
+   cd semantic-scholar-search
+   direnv allow
+   ```
+
+#### Option 2: Manual Setup
+
+1. Create and activate virtual environment:
+   ```bash
+   python -m venv .venv
+   
+   # On Unix/macOS
+   source .venv/bin/activate
+   
+   # On Windows
+   .venv\Scripts\activate
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install poetry
+   poetry install
+   ```
+
+### Make changes
+
+1. Make changes to the code
+2. Run tests:
+   ```bash
+   make test
+   ```
 
 ## Contributing
 
