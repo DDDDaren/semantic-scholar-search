@@ -1,4 +1,4 @@
-# Semantic Scholar Agent
+# Semantic Scholar Search
 
 A Python-based command-line tool for searching and downloading academic papers from Semantic Scholar.
 
@@ -16,13 +16,13 @@ A Python-based command-line tool for searching and downloading academic papers f
 ### For Users
 1. Install directly from GitHub:
    ```bash
-   pip install git+https://github.com/DDDDaren/semantic-scholar-agent.git
+   pip install git+https://github.com/DDDDaren/semantic-scholar-search.git
    ```
 
    Or install from source:
    ```bash
-   git clone https://github.com/DDDDaren/semantic-scholar-agent.git
-   cd semantic-scholar-agent
+   git clone https://github.com/DDDDaren/semantic-scholar-search.git
+   cd semantic-scholar-search
    pip install .
    ```
 
@@ -52,8 +52,8 @@ A Python-based command-line tool for searching and downloading academic papers f
 
 3. Clone and enter the repository:
    ```bash
-   git clone https://github.com/DDDDaren/semantic-scholar-agent.git
-   cd semantic-scholar-agent
+   git clone https://github.com/DDDDaren/semantic-scholar-search.git
+   cd semantic-scholar-search
    direnv allow
    ```
 
