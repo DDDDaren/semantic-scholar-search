@@ -2,7 +2,6 @@ import pytest
 from unittest.mock import Mock, patch, call
 import logging
 import os
-from datetime import datetime
 
 from semantic_scholar_search.search_cli import setup_logging, main
 
@@ -197,6 +196,7 @@ def test_main_non_bulk_sort_warning(mock_parser, mock_args):
         mock_logger.warning.assert_called_with("Non-bulk mode: sort will be overridden to relevance:desc")
 
 def test_setup_logging_file_creation():
+    from datetime import datetime
     session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
     logger = setup_logging(session_id)
     
