@@ -51,11 +51,11 @@ class Downloader:
             self.logger = logging.LoggerAdapter(base_logger, {"session_id": session_id})
 
         self.download_stats = {
-            'total': 0,
-            'open_access_success': 0,
-            'semantic_reader_success': 0,
-            'arxiv_success': 0,
-            'failed': 0
+            "total": 0,
+            "open_access_success": 0,
+            "semantic_reader_success": 0,
+            "arxiv_success": 0,
+            "failed": 0,
         }
 
         self.last_arxiv_request_time = 0  # Track last arXiv request time
@@ -94,7 +94,9 @@ class Downloader:
         time_since_last_request = current_time - self.last_arxiv_request_time
         if time_since_last_request < self.ARXIV_RATE_LIMIT:
             sleep_time = self.ARXIV_RATE_LIMIT - time_since_last_request
-            self.logger.info(f"Waiting {sleep_time:.2f} seconds to respect arXiv rate limit...")
+            self.logger.info(
+                f"Waiting {sleep_time:.2f} seconds to respect arXiv rate limit..."
+            )
             time.sleep(sleep_time)
         self.last_arxiv_request_time = time.time()
 
@@ -106,8 +108,8 @@ class Downloader:
         2. Semantic Reader
         3. ArXiv (with rate limiting)
         """
-        self.download_stats['total'] += 1
-        
+        self.download_stats["total"] += 1
+
         if not os.path.exists(self.get_directory()):
             raise ValueError(
                 f"Directory {self.get_directory()} does not exist. Please run the create_directory method first."
@@ -130,65 +132,70 @@ class Downloader:
                     else paper.openAccessPdf.get("url")
                 )
                 if pdf_url:
-                    self.logger.info(f"Attempting to download open access PDF from: {pdf_url}")
-                    response = requests.get(pdf_url, headers=self._get_browser_headers())
-                    if response.status_code == 200 and response.headers.get('content-type', '').lower().startswith('application/pdf'):
+                    self.logger.info(
+                        f"Attempting to download open access PDF from: {pdf_url}"
+                    )
+                    response = requests.get(
+                        pdf_url, headers=self._get_browser_headers()
+                    )
+                    if response.status_code == 200 and response.headers.get(
+                        "content-type", ""
+                    ).lower().startswith("application/pdf"):
                         with open(base_filename, "wb") as f:
                             f.write(response.content)
                         download_success = True
-                        download_method = 'open_access'
-                        self.download_stats['open_access_success'] += 1
+                        download_method = "open_access"
+                        self.download_stats["open_access_success"] += 1
                         self.logger.info("Successfully downloaded open access PDF")
                     else:
-                        self.logger.warning(f"Failed to download open access PDF. Status code: {response.status_code}, Content-Type: {response.headers.get('content-type')}")
+                        self.logger.warning(
+                            f"Failed to download open access PDF. Status code: {response.status_code}, Content-Type: {response.headers.get('content-type')}"
+                        )
                 else:
                     self.logger.warning("Open access paper has no PDF URL")
             else:
                 self.logger.info("Paper is not open access or has no PDF link")
 
             # Second try: Semantic Reader
-            if not download_success and hasattr(paper, 'url'):
+            if not download_success and hasattr(paper, "url"):
                 self.logger.info("Attempting Semantic Reader download")
-                download_success = self._try_semantic_reader(paper.url, base_filename, paper)
+                download_success = self._try_semantic_reader(
+                    paper.url, base_filename, paper
+                )
                 if download_success:
-                    download_method = 'semantic_reader'
-                    self.download_stats['semantic_reader_success'] += 1
+                    download_method = "semantic_reader"
+                    self.download_stats["semantic_reader_success"] += 1
                     self.logger.info("Successfully downloaded via Semantic Reader")
                 else:
                     self.logger.info("Semantic Reader download failed")
 
             # Third try: ArXiv papers (with rate limiting)
-            if not download_success and (
-                paper.journal
-                and paper.journal.name == "arXiv"
-                and hasattr(paper, "arxivId")
-                and paper.arxivId
-            ):
+            if not download_success and hasattr(paper, "arxivId"):
                 # Respect arXiv's rate limit
                 self._respect_arxiv_rate_limit()
-                
+
                 # Instead of downloading directly, redirect to abstract page
                 arxiv_id = paper.arxivId.strip()
                 abstract_url = f"https://arxiv.org/abs/{arxiv_id}"
                 pdf_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
-                
-                self.logger.info(f"ArXiv paper found. Please access it via:")
+
+                self.logger.info("ArXiv paper found. Please access it via:")
                 self.logger.info(f"Abstract page: {abstract_url}")
                 self.logger.info(f"PDF download: {pdf_url}")
-                
+
                 # Record as success but don't download
                 download_success = True
-                download_method = 'arxiv'
-                self.download_stats['arxiv_success'] += 1
-                
+                download_method = "arxiv"
+                self.download_stats["arxiv_success"] += 1
+
                 # Create a text file with the arXiv links instead of downloading PDF
-                txt_filename = base_filename.replace('.pdf', '_arxiv_links.txt')
-                with open(txt_filename, 'w') as f:
+                txt_filename = base_filename.replace(".pdf", "_arxiv_links.txt")
+                with open(txt_filename, "w") as f:
                     f.write(f"Title: {paper.title}\n")
                     f.write(f"ArXiv ID: {arxiv_id}\n")
                     f.write(f"Abstract page: {abstract_url}\n")
                     f.write(f"PDF download: {pdf_url}\n")
-                
+
                 base_filename = txt_filename  # Update filename for database recording
                 self.logger.info("Created text file with arXiv links")
             else:
@@ -197,13 +204,13 @@ class Downloader:
             if not download_success:
                 self.logger.warning(f"Could not download paper: {paper.title}")
                 base_filename = None
-                self.download_stats['failed'] += 1
+                self.download_stats["failed"] += 1
 
         except Exception as e:
             self.logger.error(f"Error downloading paper: {str(e)}")
             base_filename = None
             download_success = False
-            self.download_stats['failed'] += 1
+            self.download_stats["failed"] += 1
 
         # Record the paper and its download status in the database
         self.db.record_paper(search_id, paper, base_filename, download_success)
@@ -406,7 +413,7 @@ class Downloader:
             "Accept-Encoding": "gzip, deflate",
             "Connection": "keep-alive",
             "DNT": "1",
-            "Upgrade-Insecure-Requests": "1"
+            "Upgrade-Insecure-Requests": "1",
         }
 
     def get_download_stats(self):

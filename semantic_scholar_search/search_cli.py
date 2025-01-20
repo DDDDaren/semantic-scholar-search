@@ -164,7 +164,7 @@ def main():
     downloader.create_directory()
 
     logger.info("=" * 30 + " Starting Paper Downloads " + "=" * 30)
-    
+
     for i, paper in enumerate(results, 1):
         logger.info("-" * 30 + f" Downloading Paper {i}/{len(results)} " + "-" * 30)
         logger.info(f"Title: {paper.title}")
@@ -191,17 +191,30 @@ def main():
     logger.info(f"- Min Citation Count: {args.min_citation_count}")
     logger.info(f"- Fields of Study: {args.fields_of_study or 'None'}")
     logger.info(f"- Publication Date/Year: {args.publication_date_or_year or 'None'}")
-    
+
     logger.info("\nDownload Statistics:")
     logger.info(f"- Total Papers Found: {stats['total']}")
-    logger.info(f"- Successfully Downloaded: {stats['open_access_success'] + stats['semantic_reader_success'] + stats['arxiv_success']}")
+    logger.info(
+        f"- Successfully Downloaded: {stats['open_access_success'] + stats['semantic_reader_success'] + stats['arxiv_success']}"
+    )
     logger.info(f"  • Via Open Access: {stats['open_access_success']}")
     logger.info(f"  • Via Semantic Reader: {stats['semantic_reader_success']}")
     logger.info(f"  • Via ArXiv: {stats['arxiv_success']}")
     logger.info(f"- Failed Downloads: {stats['failed']}")
-    
-    success_rate = ((stats['open_access_success'] + stats['semantic_reader_success'] + 
-                    stats['arxiv_success']) / stats['total'] * 100) if stats['total'] > 0 else 0
+
+    success_rate = (
+        (
+            (
+                stats["open_access_success"]
+                + stats["semantic_reader_success"]
+                + stats["arxiv_success"]
+            )
+            / stats["total"]
+            * 100
+        )
+        if stats["total"] > 0
+        else 0
+    )
     logger.info(f"- Success Rate: {success_rate:.1f}%")
 
     logger.info("=" * 30 + " Search Session Completed " + "=" * 30)

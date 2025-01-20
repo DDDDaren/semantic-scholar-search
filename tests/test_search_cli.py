@@ -33,6 +33,16 @@ def mock_args():
     args.publication_date_or_year = None
     return args
 
+@pytest.fixture
+def mock_download_stats():
+    return {
+        'total': 1,
+        'open_access_success': 0,
+        'semantic_reader_success': 1,
+        'arxiv_success': 0,
+        'failed': 0
+    }
+
 @pytest.fixture(autouse=True)
 def reset_logging():
     """Reset logging before each test"""
@@ -91,7 +101,7 @@ def test_main_with_no_results(mock_parser):
         )
 
 @patch('semantic_scholar_search.search_cli.argparse.ArgumentParser')
-def test_main_with_results(mock_parser, mock_args, mock_paper):
+def test_main_with_results(mock_parser, mock_args, mock_paper, mock_download_stats):
     mock_parser.return_value.parse_args.return_value = mock_args
     
     with patch('semantic_scholar_search.search_cli.search_papers') as mock_search, \
@@ -102,7 +112,10 @@ def test_main_with_results(mock_parser, mock_args, mock_paper):
         mock_search.return_value = [mock_paper]
         mock_logger = Mock()
         mock_logging.return_value = mock_logger
+        
+        # Setup mock downloader with stats
         mock_downloader_instance = Mock()
+        mock_downloader_instance.get_download_stats.return_value = mock_download_stats
         mock_downloader.return_value = mock_downloader_instance
         
         main()
@@ -129,6 +142,14 @@ def test_main_with_results(mock_parser, mock_args, mock_paper):
         # Verify downloader was used
         mock_downloader_instance.create_directory.assert_called_once()
         mock_downloader_instance.download_paper.assert_called_once_with(mock_paper, mock_db().record_search())
+        
+        # Verify download statistics were logged
+        mock_logger.info.assert_any_call(f"- Total Papers Found: {mock_download_stats['total']}")
+        mock_logger.info.assert_any_call(f"- Successfully Downloaded: {mock_download_stats['open_access_success'] + mock_download_stats['semantic_reader_success'] + mock_download_stats['arxiv_success']}")
+        mock_logger.info.assert_any_call(f"  • Via Open Access: {mock_download_stats['open_access_success']}")
+        mock_logger.info.assert_any_call(f"  • Via Semantic Reader: {mock_download_stats['semantic_reader_success']}")
+        mock_logger.info.assert_any_call(f"  • Via ArXiv: {mock_download_stats['arxiv_success']}")
+        mock_logger.info.assert_any_call(f"- Failed Downloads: {mock_download_stats['failed']}")
 
 def test_main_with_invalid_max_results(mock_args):
     mock_args.max_results_per_page = 1001
