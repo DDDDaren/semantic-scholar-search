@@ -195,23 +195,14 @@ def main():
     logger.info("\nDownload Statistics:")
     logger.info(f"- Total Papers Found: {stats['total']}")
     logger.info(
-        f"- Successfully Downloaded: {stats['open_access_success'] + stats['semantic_reader_success'] + stats['arxiv_success']}"
+        f"- Successfully Downloaded: {stats['open_access_success'] + stats['arxiv_success']}"
     )
     logger.info(f"  • Via Open Access: {stats['open_access_success']}")
-    logger.info(f"  • Via Semantic Reader: {stats['semantic_reader_success']}")
     logger.info(f"  • Via ArXiv: {stats['arxiv_success']}")
     logger.info(f"- Failed Downloads: {stats['failed']}")
 
     success_rate = (
-        (
-            (
-                stats["open_access_success"]
-                + stats["semantic_reader_success"]
-                + stats["arxiv_success"]
-            )
-            / stats["total"]
-            * 100
-        )
+        ((stats["open_access_success"] + stats["arxiv_success"]) / stats["total"] * 100)
         if stats["total"] > 0
         else 0
     )

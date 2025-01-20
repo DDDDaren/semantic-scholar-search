@@ -38,8 +38,8 @@ def mock_download_stats():
     return {
         'total': 1,
         'open_access_success': 0,
-        'semantic_reader_success': 1,
-        'arxiv_success': 0,
+        'arxiv_success': 1,
+        'direct_url_success': 0,
         'failed': 0
     }
 
@@ -145,9 +145,8 @@ def test_main_with_results(mock_parser, mock_args, mock_paper, mock_download_sta
         
         # Verify download statistics were logged
         mock_logger.info.assert_any_call(f"- Total Papers Found: {mock_download_stats['total']}")
-        mock_logger.info.assert_any_call(f"- Successfully Downloaded: {mock_download_stats['open_access_success'] + mock_download_stats['semantic_reader_success'] + mock_download_stats['arxiv_success']}")
+        mock_logger.info.assert_any_call(f"- Successfully Downloaded: {mock_download_stats['open_access_success'] + mock_download_stats['arxiv_success']}")
         mock_logger.info.assert_any_call(f"  • Via Open Access: {mock_download_stats['open_access_success']}")
-        mock_logger.info.assert_any_call(f"  • Via Semantic Reader: {mock_download_stats['semantic_reader_success']}")
         mock_logger.info.assert_any_call(f"  • Via ArXiv: {mock_download_stats['arxiv_success']}")
         mock_logger.info.assert_any_call(f"- Failed Downloads: {mock_download_stats['failed']}")
 
