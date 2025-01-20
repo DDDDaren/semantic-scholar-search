@@ -26,8 +26,11 @@ def setup_logging(session_id):
     file_handler = logging.FileHandler(log_file)
     stream_handler = logging.StreamHandler()
 
-    # Create formatter
-    formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] %(message)s")
+    # Create formatter with aligned and colored output
+    formatter = logging.Formatter(
+        fmt="%(asctime)s [%(levelname)-8s] [%(name)-30s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
 
     # Add formatter to handlers
     file_handler.setFormatter(formatter)
@@ -40,6 +43,18 @@ def setup_logging(session_id):
     # Create and return logger for this module
     logger = logging.getLogger(__name__)
     return logging.LoggerAdapter(logger, {"session_id": session_id})
+
+
+def log_section(logger, title: str, width: int = 100):
+    """Helper function to create consistent section headers"""
+    padding = (width - len(title) - 2) // 2  # -2 for the spaces around title
+    return logger.info("=" * padding + f" {title} " + "=" * padding)
+
+
+def log_subsection(logger, title: str, width: int = 100):
+    """Helper function to create consistent subsection headers"""
+    padding = (width - len(title) - 2) // 2
+    return logger.info("-" * padding + f" {title} " + "-" * padding)
 
 
 def main():
@@ -102,15 +117,16 @@ def main():
     session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
     logger = setup_logging(session_id)
 
-    logger.info("=" * 30 + " Search Session Started " + "=" * 30)
-    logger.info(f"Query: {args.query}")
-    logger.info(
-        f"Parameters: bulk={args.bulk}, max_pages={args.max_pages}, "
-        f"max_results_per_page={args.max_results_per_page}, sort={args.sort}, "
-        f"min_citation_count={args.min_citation_count}, "
-        f"fields_of_study={args.fields_of_study}, "
-        f"publication_date_or_year={args.publication_date_or_year}"
-    )
+    log_section(logger, "Search Session Started")
+    logger.info("Query Parameters:")
+    logger.info(f"├── Query: {args.query}")
+    logger.info(f"├── Bulk Mode: {args.bulk}")
+    logger.info(f"├── Max Pages: {args.max_pages}")
+    logger.info(f"├── Results Per Page: {args.max_results_per_page}")
+    logger.info(f"├── Sort: {args.sort}")
+    logger.info(f"├── Min Citation Count: {args.min_citation_count}")
+    logger.info(f"├── Fields of Study: {args.fields_of_study or 'None'}")
+    logger.info(f"└── Publication Date/Year: {args.publication_date_or_year or 'None'}")
 
     if args.bulk:
         logger.warning("Bulk mode enabled: limit will be overridden to 1000")
@@ -130,7 +146,7 @@ def main():
         args.publication_date_or_year,
     )
 
-    logger.info("=" * 30 + " Starting Paper Search " + "=" * 30)
+    log_section(logger, "Starting Paper Search")
     results = search_papers(
         args.query,
         bulk=args.bulk,
@@ -147,7 +163,7 @@ def main():
         return
 
     logger.info(f"Found {len(results)} papers")
-    logger.info("=" * 30 + " Finished Paper Search " + "=" * 30)
+    log_section(logger, "Finished Paper Search")
 
     downloader = Downloader(
         db,
@@ -163,52 +179,39 @@ def main():
     )
     downloader.create_directory()
 
-    logger.info("=" * 30 + " Starting Paper Downloads " + "=" * 30)
+    log_section(logger, "Starting Paper Downloads")
 
     for i, paper in enumerate(results, 1):
-        logger.info("-" * 30 + f" Downloading Paper {i}/{len(results)} " + "-" * 30)
-        logger.info(f"Title: {paper.title}")
+        log_subsection(logger, f"Paper {i}/{len(results)}")
+        logger.info("Paper Details:")
+        logger.info(f"├── Title: {paper.title}")
         if paper.authors:
             authors = [author.name for author in paper.authors]
-            logger.info(f"Authors: {', '.join(authors)}")
-        logger.info(f"Year: {paper.year or 'N/A'}")
-        logger.info(f"URL: {paper.url or 'N/A'}")
+            logger.info(f"├── Authors: {', '.join(authors)}")
+        logger.info(f"├── Year: {paper.year or 'N/A'}")
+        logger.info(f"└── URL: {paper.url or 'N/A'}")
 
         downloader.download_paper(paper, search_id)
-        logger.info("-" * 30 + f" Downloaded Paper {i}/{len(results)} " + "-" * 30)
+        log_subsection(logger, f"Completed Paper {i}/{len(results)}")
 
     # Get final statistics
     stats = downloader.get_download_stats()
 
-    # Print summary statistics
-    logger.info("=" * 30 + " Download Summary " + "=" * 30)
-    logger.info("Search Parameters:")
-    logger.info(f"- Query: {args.query}")
-    logger.info(f"- Bulk Mode: {args.bulk}")
-    logger.info(f"- Max Pages: {args.max_pages}")
-    logger.info(f"- Results Per Page: {args.max_results_per_page}")
-    logger.info(f"- Sort: {args.sort}")
-    logger.info(f"- Min Citation Count: {args.min_citation_count}")
-    logger.info(f"- Fields of Study: {args.fields_of_study or 'None'}")
-    logger.info(f"- Publication Date/Year: {args.publication_date_or_year or 'None'}")
+    log_section(logger, "Download Summary")
+    
+    # Print summary statistics with tree structure
+    logger.info("Download Statistics:")
+    logger.info(f"├── Total Papers Found: {stats['total']}")
+    success_count = stats['open_access_success'] + stats['arxiv_success']
+    logger.info(f"├── Successfully Downloaded: {success_count}")
+    logger.info(f"│   ├── Via Open Access: {stats['open_access_success']}")
+    logger.info(f"│   └── Via ArXiv: {stats['arxiv_success']}")
+    logger.info(f"├── Failed Downloads: {stats['failed']}")
+    
+    success_rate = (success_count / stats["total"] * 100) if stats["total"] > 0 else 0
+    logger.info(f"└── Success Rate: {success_rate:.1f}%")
 
-    logger.info("\nDownload Statistics:")
-    logger.info(f"- Total Papers Found: {stats['total']}")
-    logger.info(
-        f"- Successfully Downloaded: {stats['open_access_success'] + stats['arxiv_success']}"
-    )
-    logger.info(f"  • Via Open Access: {stats['open_access_success']}")
-    logger.info(f"  • Via ArXiv: {stats['arxiv_success']}")
-    logger.info(f"- Failed Downloads: {stats['failed']}")
-
-    success_rate = (
-        ((stats["open_access_success"] + stats["arxiv_success"]) / stats["total"] * 100)
-        if stats["total"] > 0
-        else 0
-    )
-    logger.info(f"- Success Rate: {success_rate:.1f}%")
-
-    logger.info("=" * 30 + " Search Session Completed " + "=" * 30)
+    log_section(logger, "Search Session Completed")
 
 
 if __name__ == "__main__":
