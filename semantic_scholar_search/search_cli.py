@@ -102,7 +102,7 @@ def main():
     session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
     logger = setup_logging(session_id)
 
-    logger.info("=" * 20 + " Search Session Started " + "=" * 20)
+    logger.info("=" * 30 + " Search Session Started " + "=" * 30)
     logger.info(f"Query: {args.query}")
     logger.info(
         f"Parameters: bulk={args.bulk}, max_pages={args.max_pages}, "
@@ -130,7 +130,7 @@ def main():
         args.publication_date_or_year,
     )
 
-    logger.info("=" * 20 + " Starting Paper Search " + "=" * 20)
+    logger.info("=" * 30 + " Starting Paper Search " + "=" * 30)
     results = search_papers(
         args.query,
         bulk=args.bulk,
@@ -147,7 +147,7 @@ def main():
         return
 
     logger.info(f"Found {len(results)} papers")
-    logger.info("=" * 20 + " Finished Paper Search " + "=" * 20)
+    logger.info("=" * 30 + " Finished Paper Search " + "=" * 30)
 
     downloader = Downloader(
         db,
@@ -163,7 +163,8 @@ def main():
     )
     downloader.create_directory()
 
-    logger.info("=" * 20 + " Starting Paper Downloads " + "=" * 20)
+    logger.info("=" * 30 + " Starting Paper Downloads " + "=" * 30)
+    
     for i, paper in enumerate(results, 1):
         logger.info("-" * 30 + f" Downloading Paper {i}/{len(results)} " + "-" * 30)
         logger.info(f"Title: {paper.title}")
@@ -176,7 +177,34 @@ def main():
         downloader.download_paper(paper, search_id)
         logger.info("-" * 30 + f" Downloaded Paper {i}/{len(results)} " + "-" * 30)
 
-    logger.info("=" * 20 + " Search Session Completed " + "=" * 20)
+    # Get final statistics
+    stats = downloader.get_download_stats()
+
+    # Print summary statistics
+    logger.info("=" * 30 + " Download Summary " + "=" * 30)
+    logger.info("Search Parameters:")
+    logger.info(f"- Query: {args.query}")
+    logger.info(f"- Bulk Mode: {args.bulk}")
+    logger.info(f"- Max Pages: {args.max_pages}")
+    logger.info(f"- Results Per Page: {args.max_results_per_page}")
+    logger.info(f"- Sort: {args.sort}")
+    logger.info(f"- Min Citation Count: {args.min_citation_count}")
+    logger.info(f"- Fields of Study: {args.fields_of_study or 'None'}")
+    logger.info(f"- Publication Date/Year: {args.publication_date_or_year or 'None'}")
+    
+    logger.info("\nDownload Statistics:")
+    logger.info(f"- Total Papers Found: {stats['total']}")
+    logger.info(f"- Successfully Downloaded: {stats['open_access_success'] + stats['semantic_reader_success'] + stats['arxiv_success']}")
+    logger.info(f"  • Via Open Access: {stats['open_access_success']}")
+    logger.info(f"  • Via Semantic Reader: {stats['semantic_reader_success']}")
+    logger.info(f"  • Via ArXiv: {stats['arxiv_success']}")
+    logger.info(f"- Failed Downloads: {stats['failed']}")
+    
+    success_rate = ((stats['open_access_success'] + stats['semantic_reader_success'] + 
+                    stats['arxiv_success']) / stats['total'] * 100) if stats['total'] > 0 else 0
+    logger.info(f"- Success Rate: {success_rate:.1f}%")
+
+    logger.info("=" * 30 + " Search Session Completed " + "=" * 30)
 
 
 if __name__ == "__main__":

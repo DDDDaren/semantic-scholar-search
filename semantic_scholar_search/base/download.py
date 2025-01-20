@@ -6,6 +6,7 @@ import os
 import requests
 import logging
 import re
+import time
 from bs4 import BeautifulSoup
 
 
@@ -49,6 +50,17 @@ class Downloader:
             base_logger = logging.getLogger(__name__)
             self.logger = logging.LoggerAdapter(base_logger, {"session_id": session_id})
 
+        self.download_stats = {
+            'total': 0,
+            'open_access_success': 0,
+            'semantic_reader_success': 0,
+            'arxiv_success': 0,
+            'failed': 0
+        }
+
+        self.last_arxiv_request_time = 0  # Track last arXiv request time
+        self.ARXIV_RATE_LIMIT = 3  # Minimum seconds between requests
+
     def get_directory(self):
         safe_query = "".join(
             c for c in self.search_query if c.isalnum() or c in (" ", "-", "_")
@@ -76,10 +88,26 @@ class Downloader:
     def create_directory(self):
         os.makedirs(self.get_directory(), exist_ok=True)
 
+    def _respect_arxiv_rate_limit(self):
+        """Ensure we respect arXiv's rate limit of 1 request per 3 seconds"""
+        current_time = time.time()
+        time_since_last_request = current_time - self.last_arxiv_request_time
+        if time_since_last_request < self.ARXIV_RATE_LIMIT:
+            sleep_time = self.ARXIV_RATE_LIMIT - time_since_last_request
+            self.logger.info(f"Waiting {sleep_time:.2f} seconds to respect arXiv rate limit...")
+            time.sleep(sleep_time)
+        self.last_arxiv_request_time = time.time()
+
     def download_paper(self, paper, search_id):
         """
         Download paper based on its source (Semantic Scholar PDF or ArXiv)
+        Priority order:
+        1. Open Access PDF
+        2. Semantic Reader
+        3. ArXiv (with rate limiting)
         """
+        self.download_stats['total'] += 1
+        
         if not os.path.exists(self.get_directory()):
             raise ValueError(
                 f"Directory {self.get_directory()} does not exist. Please run the create_directory method first."
@@ -92,44 +120,95 @@ class Downloader:
         base_filename = os.path.join(self.get_directory(), safe_title + ".pdf")
 
         download_success = False
+        download_method = None
         try:
-            # Handle ArXiv papers
-            if (
-                paper.journal
-                and paper.journal.name == "arXiv"
-                and hasattr(paper, "arxivId")
-                and paper.arxivId
-            ):
-                pdf_url = f"https://arxiv.org/pdf/{paper.arxivId}.pdf"
-                response = requests.get(pdf_url)
-                with open(base_filename, "wb") as f:
-                    f.write(response.content)
-                download_success = True
-            # Handle open access papers
-            elif paper.isOpenAccess and paper.openAccessPdf:
+            # First try: Open access papers
+            if paper.isOpenAccess and paper.openAccessPdf:
                 pdf_url = (
                     paper.openAccessPdf.url
                     if hasattr(paper.openAccessPdf, "url")
                     else paper.openAccessPdf.get("url")
                 )
                 if pdf_url:
-                    response = requests.get(pdf_url)
-                    with open(base_filename, "wb") as f:
-                        f.write(response.content)
-                    download_success = True
+                    self.logger.info(f"Attempting to download open access PDF from: {pdf_url}")
+                    response = requests.get(pdf_url, headers=self._get_browser_headers())
+                    if response.status_code == 200 and response.headers.get('content-type', '').lower().startswith('application/pdf'):
+                        with open(base_filename, "wb") as f:
+                            f.write(response.content)
+                        download_success = True
+                        download_method = 'open_access'
+                        self.download_stats['open_access_success'] += 1
+                        self.logger.info("Successfully downloaded open access PDF")
+                    else:
+                        self.logger.warning(f"Failed to download open access PDF. Status code: {response.status_code}, Content-Type: {response.headers.get('content-type')}")
+                else:
+                    self.logger.warning("Open access paper has no PDF URL")
+            else:
+                self.logger.info("Paper is not open access or has no PDF link")
+
+            # Second try: Semantic Reader
+            if not download_success and hasattr(paper, 'url'):
+                self.logger.info("Attempting Semantic Reader download")
+                download_success = self._try_semantic_reader(paper.url, base_filename, paper)
+                if download_success:
+                    download_method = 'semantic_reader'
+                    self.download_stats['semantic_reader_success'] += 1
+                    self.logger.info("Successfully downloaded via Semantic Reader")
+                else:
+                    self.logger.info("Semantic Reader download failed")
+
+            # Third try: ArXiv papers (with rate limiting)
+            if not download_success and (
+                paper.journal
+                and paper.journal.name == "arXiv"
+                and hasattr(paper, "arxivId")
+                and paper.arxivId
+            ):
+                # Respect arXiv's rate limit
+                self._respect_arxiv_rate_limit()
+                
+                # Instead of downloading directly, redirect to abstract page
+                arxiv_id = paper.arxivId.strip()
+                abstract_url = f"https://arxiv.org/abs/{arxiv_id}"
+                pdf_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
+                
+                self.logger.info(f"ArXiv paper found. Please access it via:")
+                self.logger.info(f"Abstract page: {abstract_url}")
+                self.logger.info(f"PDF download: {pdf_url}")
+                
+                # Record as success but don't download
+                download_success = True
+                download_method = 'arxiv'
+                self.download_stats['arxiv_success'] += 1
+                
+                # Create a text file with the arXiv links instead of downloading PDF
+                txt_filename = base_filename.replace('.pdf', '_arxiv_links.txt')
+                with open(txt_filename, 'w') as f:
+                    f.write(f"Title: {paper.title}\n")
+                    f.write(f"ArXiv ID: {arxiv_id}\n")
+                    f.write(f"Abstract page: {abstract_url}\n")
+                    f.write(f"PDF download: {pdf_url}\n")
+                
+                base_filename = txt_filename  # Update filename for database recording
+                self.logger.info("Created text file with arXiv links")
+            else:
+                self.logger.info("Paper is not from arXiv or missing arXiv ID")
 
             if not download_success:
+                self.logger.warning(f"Could not download paper: {paper.title}")
                 base_filename = None
+                self.download_stats['failed'] += 1
 
         except Exception as e:
             self.logger.error(f"Error downloading paper: {str(e)}")
             base_filename = None
             download_success = False
+            self.download_stats['failed'] += 1
 
         # Record the paper and its download status in the database
         self.db.record_paper(search_id, paper, base_filename, download_success)
 
-        return base_filename
+        return base_filename, download_method
 
     def _handle_arxiv_download(self, arxiv_id, base_filename, paper):
         """Handle ArXiv paper downloads"""
@@ -321,15 +400,15 @@ class Downloader:
     def _get_browser_headers(self):
         """Get common browser-like headers"""
         return {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Accept": "application/pdf,application/x-pdf,*/*",
             "Accept-Language": "en-US,en;q=0.9",
-            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Encoding": "gzip, deflate",
             "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "none",
-            "Sec-Fetch-User": "?1",
-            "Cache-Control": "max-age=0",
+            "DNT": "1",
+            "Upgrade-Insecure-Requests": "1"
         }
+
+    def get_download_stats(self):
+        """Return the current download statistics"""
+        return self.download_stats
